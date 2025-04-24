@@ -5,8 +5,10 @@ import eu.frezilla.payroll.repositories.ProjectRepository;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequestMapping("/api/projects")
 @RestController
-public class ProjectController implements ApiController<Project, Long> {
+public class ProjectController {
 
     private final ProjectRepository repository;
     
@@ -22,30 +24,39 @@ public class ProjectController implements ApiController<Project, Long> {
         this.repository = Objects.requireNonNull(projectRepository);
     }
 
-    @Override
     @PostMapping
     public Project create(@RequestBody Project object) {
         return repository.save(object);
     }
 
-    @Override
+    @DeleteMapping
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);
     }
 
-    @Override
+    @GetMapping
     public List<Project> findAll() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return repository.findAll();
     }
 
-    @Override
-    public Project findByKey(Long id) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    @GetMapping("{id}")
+    public Project findByKey(@PathVariable Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
     }
 
-    @Override
-    public Project replace(Project object, Long id) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    @PutMapping("{id}")
+    public Project replace(@RequestBody Project object, @PathVariable Long id) {
+        return repository.findById(id)
+                .map(project -> {
+                    project.setCommentary(object.getCommentary());
+                    project.setDescription(object.getDescription());
+                    project.setName(object.getName());
+                    return repository.save(project);
+                })
+                .orElseGet(() -> {
+                    return repository.save(object);
+                });
     }
     
     

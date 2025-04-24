@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Project CRUD Application</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/vue@3.4.27/dist/vue.global.prod.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <header>Project CRUD Application</header>
+
+            <main>
+                <button @click="showProjectModal(null)">Add project</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Commentary</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="project in projects" :key="project.id">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <button @click="showPersonModal(project)">Edit</button>
+                                <button @click="deleteProject(project)">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </main>
+
+            <footer>
+                <p>2025 Project CRUD Application.</p>
+            </footer>
+
+            <dialog id="project-dialog">
+                <h2>Project</h2>
+                <form @submit.prevent="saveProject">
+                    <fieldset>
+                        <label for="name">Name</label><input type="text" id="name" v-model="formData.name" placeHolder="Name" required>
+                    </fieldset>
+                    <menu>
+                        <button type="submit">Submit</button>
+                        <button type="button" @click="closeModal">Cancel</button>
+                    </menu>
+                </form>
+            </dialog>
+        </div>
+
+        <script>
+            const {createApp, ref, computed} = Vue;
+
+            createApp({
+                data() {
+                    return {
+                        projects: [],
+                        modalVisible: false,
+                        editMode: false,
+                        formData: {
+                            name: '',
+                            commentary: '',
+                            description: ''
+                        },
+                        editedProjectId: null,
+                        pageSize: 5,
+                        currentPage: 1,
+                        totalPages: 1
+                    };
+                },
+                methods: {
+                    getAllProjects(page) {
+                        fetch('/api/projects')
+                                .then(response => response.json())
+                                .then(data => {
+                                    this.persons = data.content;
+                                    this.totalPages = data.totalPages;
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching persons:', error);
+                                });
+                    },
+                    showPersonModal(project) {
+                        this.editMode = !!project;
+                        this.modalVisible = true;
+                        if (project) {
+                            this.editedProjectId = project.id;
+                            this.formData = {...project};
+                        } else {
+                            this.resetForm();
+                        }
+                        document.getElementById('project-dialog').showModal();
+                    },
+                    savePerson() {
+                        if (this.editMode) {
+                            fetch('/api/persons/${this.editedPersonId}', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(this.formData)
+                            })
+                                    .then(() => {
+                                        this.getAllPersons(this.currentPage);
+                                        this.closeModal();
+                                    })
+                                    .catch(error => {
+                                        console.error('Error updating person:', error);
+                                    });
+                        } else {
+                            fetch('/api/persons', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(this.formData)
+                            })
+                                    .then(() => {
+                                        this.getAllPersons(this.currentPage);
+                                        this.closeModal();
+                                    })
+                                    .catch(error => {
+                                        console.error('Error adding person:', error);
+                                    });
+                        }
+                    },
+                    deletePerson(personId) {
+                        fetch('/api/persons/${personId}', {
+                            method: 'DELETE'
+                        })
+                                .then(() => {
+                                    this.getAllPersons(this.currentPage);
+                                })
+                                .catch(error => {
+                                    console.error('Error deleting person:', error);
+                                });
+                    },
+                    closeModal() {
+                        this.modalVisible = false;
+                        this.editMode = false;
+                        this.resetForm();
+                        document.getElementById('person-dialog').close();
+                    },
+                    resetForm() {
+                        this.formData = {
+                            firstName: '',
+                            lastName: '',
+                            birthYear: ''
+                        };
+                        this.editedPersonId = null;
+                    },
+                    changePage(page) {
+                        this.currentPage = page;
+                        this.getAllPersons(page);
+                    }
+                },
+                mounted() {
+                    this.getAllProjects(this.currentPage);
+                }
+            }).mount('#app');
+
+
+        </script>
+    </body>
+</html>
