@@ -2,8 +2,9 @@ package eu.frezilla.payroll.api.controllers;
 
 import eu.frezilla.payroll.entities.Project;
 import eu.frezilla.payroll.repositories.ProjectRepository;
-import java.util.List;
 import java.util.Objects;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,14 +30,14 @@ public class ProjectController {
         return repository.save(object);
     }
 
-    @DeleteMapping
+    @DeleteMapping("{id}")
     public void delete(@PathVariable Long id) {
         repository.deleteById(id);
     }
 
     @GetMapping
-    public List<Project> findAll() {
-        return repository.findAll();
+    public Page<Project> findAll(Pageable p) {
+        return repository.findAll(p);
     }
 
     @GetMapping("{id}")

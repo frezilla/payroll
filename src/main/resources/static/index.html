@@ -4,7 +4,6 @@
         <title>Project CRUD Application</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
         <script src="https://cdn.jsdelivr.net/npm/vue@3.4.27/dist/vue.global.prod.js"></script>
     </head>
     <body>
@@ -24,16 +23,23 @@
                     </thead>
                     <tbody>
                         <tr v-for="project in projects" :key="project.id">
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <td>{{ project.name }}</td>
+                            <td>{{ project.commentary }}</td>
+                            <td>{{ project.description }}</td>
                             <td>
-                                <button @click="showPersonModal(project)">Edit</button>
-                                <button @click="deleteProject(project)">Delete</button>
+                                <button @click="showProjectModal(project)">Edit</button>
+                                <button @click="deleteProject(project.id)">Delete</button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                <nav style="display: flex; justify-content: center; margin-top: 20px;">
+                    <ul style="display: flex; list-style: none; padding: 0;">
+                        <li v-for="page in totalPages" :key="page" @click="changePage(page)" style="margin: 0 5px;">
+                            <a href="#" :style="{ fontWeight: currentPage === page ? 'bold' : 'normal', cursor: 'pointer' }">{{ page }}</a>
+                        </li>
+                    </ul>
+                </nav>
             </main>
 
             <footer>
@@ -45,6 +51,8 @@
                 <form @submit.prevent="saveProject">
                     <fieldset>
                         <label for="name">Name</label><input type="text" id="name" v-model="formData.name" placeHolder="Name" required>
+                        <label for="commentary">Commentary</label><input type="text" id="commentary" v-model="formData.commentary" placeHolder="Commentary" required>
+                        <label for="description">Description</label><input type="text" id="description" v-model="formData.description" placeHolder="Description" required>
                     </fieldset>
                     <menu>
                         <button type="submit">Submit</button>
@@ -76,17 +84,17 @@
                 },
                 methods: {
                     getAllProjects(page) {
-                        fetch('/api/projects')
+                        fetch(`/api/projects?page=${page - 1}&size=${this.pageSize}` )
                                 .then(response => response.json())
                                 .then(data => {
-                                    this.persons = data.content;
+                                    this.projects = data.content;
                                     this.totalPages = data.totalPages;
                                 })
                                 .catch(error => {
-                                    console.error('Error fetching persons:', error);
+                                    console.error('Error fetching projects:', error);
                                 });
                     },
-                    showPersonModal(project) {
+                    showProjectModal(project) {
                         this.editMode = !!project;
                         this.modalVisible = true;
                         if (project) {
@@ -97,9 +105,9 @@
                         }
                         document.getElementById('project-dialog').showModal();
                     },
-                    savePerson() {
+                    saveProject() {
                         if (this.editMode) {
-                            fetch('/api/persons/${this.editedPersonId}', {
+                            fetch(`/api/projects/${this.editedProjectId}`, {
                                 method: 'PUT',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -107,14 +115,14 @@
                                 body: JSON.stringify(this.formData)
                             })
                                     .then(() => {
-                                        this.getAllPersons(this.currentPage);
+                                        this.getAllProjects(this.currentPage);
                                         this.closeModal();
                                     })
                                     .catch(error => {
-                                        console.error('Error updating person:', error);
+                                        console.error('Error updating project:', error);
                                     });
                         } else {
-                            fetch('/api/persons', {
+                            fetch(`/api/projects`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -122,38 +130,38 @@
                                 body: JSON.stringify(this.formData)
                             })
                                     .then(() => {
-                                        this.getAllPersons(this.currentPage);
+                                        this.getAllProjects(this.currentPage);
                                         this.closeModal();
                                     })
                                     .catch(error => {
-                                        console.error('Error adding person:', error);
+                                        console.error('Error adding project:', error);
                                     });
                         }
                     },
-                    deletePerson(personId) {
-                        fetch('/api/persons/${personId}', {
+                    deleteProject(projectId) {
+                        fetch(`/api/projects/${projectId}`, {
                             method: 'DELETE'
                         })
                                 .then(() => {
-                                    this.getAllPersons(this.currentPage);
+                                    this.getAllProjects(this.currentPage);
                                 })
                                 .catch(error => {
-                                    console.error('Error deleting person:', error);
+                                    console.error('Error deleting project:', error);
                                 });
                     },
                     closeModal() {
                         this.modalVisible = false;
                         this.editMode = false;
                         this.resetForm();
-                        document.getElementById('person-dialog').close();
+                        document.getElementById('project-dialog').close();
                     },
                     resetForm() {
                         this.formData = {
-                            firstName: '',
-                            lastName: '',
-                            birthYear: ''
+                            name: '',
+                            description: '',
+                            commentary: ''
                         };
-                        this.editedPersonId = null;
+                        this.editedProjectId = null;
                     },
                     changePage(page) {
                         this.currentPage = page;
